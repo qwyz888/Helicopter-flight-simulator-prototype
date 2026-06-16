@@ -13,10 +13,11 @@ namespace Gameplay.Helicopter
         [SerializeField] private float collectiveChangeSpeed = 0.5f;
         [SerializeField] private float startCollective = 0.6f;
 
-        [Header("Rotation")]
-        [SerializeField] private float maxTiltAngle = 30f;
-        [SerializeField] private float pitchResponse = 4f;
-        [SerializeField] private float rollResponse = 4f;
+        [Header("Angular Physics")]
+        [SerializeField] private float pitchTorque = 40f;
+        [SerializeField] private float rollTorque = 40f;
+
+        [SerializeField] private float angularDrag = 3f;
         [SerializeField] private float yawAcceleration = 50f;
         [SerializeField] private float yawDamping = 2f;
 
@@ -36,6 +37,9 @@ namespace Gameplay.Helicopter
 
         private float _pitch;
         private float _roll;
+
+        private float _pitchVelocity;
+        private float _rollVelocity;
 
         private float _yawAngle;
         private float _yawVelocity;
@@ -95,17 +99,28 @@ namespace Gameplay.Helicopter
             _yawAngle += _yawVelocity *  dt;
         }
 
-        private void UpdateRotation( Vector2 move,float dt)
+        private void UpdateRotation(Vector2 move, float dt)
         {
-            float targetPitch = move.y * maxTiltAngle;
+            // Pilot input creates torque
 
-            float targetRoll = -move.x * maxTiltAngle;
+            _pitchVelocity += move.y * pitchTorque * dt;
+            _rollVelocity += -move.x * rollTorque * dt;
 
-            _pitch = Mathf.Lerp( _pitch, targetPitch, pitchResponse * dt);
+            // Angular damping
 
-            _roll = Mathf.Lerp( _roll, targetRoll, rollResponse * dt);
+            _pitchVelocity -= _pitchVelocity * angularDrag * dt;
+            _rollVelocity -= _rollVelocity * angularDrag * dt;
 
-            transform.rotation = Quaternion.Euler( _pitch, _yawAngle, _roll);
+            // Integrate
+
+            _pitch += _pitchVelocity * dt;
+            _roll += _rollVelocity * dt;
+
+            transform.rotation =
+                Quaternion.Euler(
+                    _pitch,
+                    _yawAngle,
+                    _roll);
         }
 
         private Vector3 CalculateMovement(float dt)

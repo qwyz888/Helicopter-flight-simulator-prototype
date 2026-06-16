@@ -193,6 +193,7 @@ GameObject:
   - component: {fileID: 1850753362}
   - component: {fileID: 1850753366}
   - component: {fileID: 1850753365}
+  - component: {fileID: 1850753367}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -287,7 +288,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Gameplay.CameraScripts.CameraFollow
   target: {fileID: 2018993001}
-  offset: {x: 0, y: 5, z: -10}
+  followSmooth: 10
+  offset: {x: 0, y: 5, z: -13}
+  sensitivity: 0.1
+  minPitch: -25
+  maxPitch: 60
 --- !u!114 &1850753366
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -427,6 +432,18 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 0
       enableBigTilePrepass: 0
       isFptlEnabled: 0
+--- !u!114 &1850753367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1850753361}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 658a0bbf53d749d18e39500b5e092847, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Infrastructure.VContainer.Tools.AutoInject
 --- !u!1 &1924282586
 GameObject:
   m_ObjectHideFlags: 0
@@ -632,9 +649,9 @@ MonoBehaviour:
   linearDrag: 4
   collectiveChangeSpeed: 0.5
   startCollective: 0.6
-  maxTiltAngle: 30
-  pitchResponse: 4
-  rollResponse: 4
+  pitchTorque: 40
+  rollTorque: 40
+  angularDrag: 3
   yawAcceleration: 50
   yawDamping: 2
   groundCheckDistance: 3

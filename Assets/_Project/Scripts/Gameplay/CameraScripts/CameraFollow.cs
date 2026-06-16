@@ -1,58 +1,73 @@
-using Gameplay.Helicopter;
+using Infrastructure.Services.Input.Core;
 using UnityEngine;
+using VContainer;
 
 namespace Gameplay.CameraScripts
 {
     public class CameraFollow : MonoBehaviour
     {
+        [Header("Target")]
         [SerializeField] private Transform target;
-        [SerializeField] private Vector3 offset = new(0f, 5f, -10f);
 
-        private HelicopterPhysics _physics;
+        [Header("Follow")]
+        [SerializeField] private float followSmooth = 10f;
+        [SerializeField] private Vector3 offset = new Vector3(0f, 5f, -10f);
 
-        private void Awake()
+        [Header("Rotation")]
+        [SerializeField] private float sensitivity = 2f;
+        [SerializeField] private float minPitch = -30f;
+        [SerializeField] private float maxPitch = 60f;
+
+        private IInputService _input;
+
+        private float _yaw;
+        private float _pitch = 15f;
+
+        private Vector3 _vel;
+
+        [Inject]
+        public void Construct(IInputService inputService)
         {
-            if (target != null)
-            {
-                _physics = target.GetComponent<HelicopterPhysics>();
-            }
+            _input = inputService;
         }
 
         private void FixedUpdate()
         {
-            if (target == null)
-                return;
+            if (target == null) return;
 
-            if (_physics == null)
-            {
-                transform.position =
-                    target.position +
-                    target.TransformDirection(offset);
+            HandleInput();
+            UpdateRotation();
+            UpdatePosition();
+        }
 
-                transform.LookAt(target);
+        private void HandleInput()
+        {
+            if (_input?.Gameplay?.Look == null) return;
 
-                return;
-            }
+            Vector2 look = _input.Gameplay.Look.Value;
 
-            float alpha =
-                (Time.time - Time.fixedTime) /
-                Time.fixedDeltaTime;
+            _yaw += look.x * sensitivity;
+            _pitch -= look.y * sensitivity;
 
-            alpha = Mathf.Clamp01(alpha);
+            _pitch = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        }
 
-            Vector3 interpolatedPosition =
-                Vector3.Lerp(
-                    _physics.PreviousPosition,
-                    _physics.CurrentPosition,
-                    alpha);
+        private void UpdateRotation()
+        {
+            transform.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+        }
 
-            Vector3 desiredPosition =
-                interpolatedPosition +
-                target.TransformDirection(offset);
+        private void UpdatePosition()
+        {
+            Vector3 desiredPos =
+                target.position +
+                transform.rotation * offset;
 
-            transform.position = desiredPosition;
-
-            transform.LookAt(interpolatedPosition);
+            transform.position = Vector3.SmoothDamp(
+                transform.position,
+                desiredPos,
+                ref _vel,
+                1f / followSmooth);
         }
     }
 }
